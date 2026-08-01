@@ -68,7 +68,49 @@ I documented the setup process, including every command I ran and what it does, 
 
 ## Phase 5: Database Interaction
 
-Not yet started. This phase will include at least three SQL queries, with at least one multi table query, along with a Python command line interface for adding and viewing books, and a video walkthrough demonstrating both.
+### SQL Queries (15 points)
+
+Three SQL queries implemented in the `sql/` directory:
+
+1. **view_books.sql** - Simple query to display available books
+   ```sql
+   SELECT title, author, available_copies
+   FROM Book
+   WHERE available_copies > 0;
+   ```
+
+2. **active_loans.sql** - Multi-table JOIN showing current loans (required multi-table query)
+   ```sql
+   SELECT m.first_name, m.last_name, b.title, l.due_date
+   FROM Loan l
+   JOIN Member m ON l.member_id = m.member_id
+   JOIN Book b ON l.book_id = b.book_id
+   WHERE l.return_date IS NULL;
+   ```
+
+3. **unpaid_fine_by_member.sql** - Complex query with GROUP BY
+   ```sql
+   SELECT m.first_name, m.last_name, SUM(f.amount) AS total_owed
+   FROM Fine f
+   JOIN Loan l ON f.loan_id = l.loan_id
+   JOIN Member m ON l.member_id = m.member_id
+   WHERE f.paid = FALSE
+   GROUP BY m.first_name, m.last_name;
+   ```
+
+### Business Logic (30 points)
+
+Python CLI interface (`src/`) with 4 core functions:
+
+**add_book()** - Adds new books with validation for title, author, and copy count
+
+**view_books()** - Displays available books with copy counts
+
+**active_loans()** - Shows all current loans with member and book details using multi-table JOIN
+
+**loan_book()** - Records new loan with automatic copy decrement. Uses FOR UPDATE lock to prevent race conditions when multiple staff members borrow the last copy. Transaction ensures data consistency with rollback on errors.
+
+**Error Handling:** Comprehensive input validation, transaction management, and database connection error handling throughout all functions.
 
 ## Tools Used
 
